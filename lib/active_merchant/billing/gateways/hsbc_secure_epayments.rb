@@ -1,6 +1,7 @@
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
-    class HsbcSecureEpaymentGateway < Gateway
+    class HsbcSecureEpaymentsGateway < Gateway
+      
       CARD_TYPE_MAPPINGS = { :visa => 1, :master => 2, :american_express => 8, :solo => 9, :switch => 10, :maestro => 14 }
       
       COUNTRY_CODE_MAPPINGS = {
@@ -70,7 +71,13 @@ module ActiveMerchant #:nodoc:
       self.money_format = :cents
       
       TEST_URL = 'https://www.secure-epayments.apixml.hsbc.com'
-      LIVE_URL = 'https://www.secure-epayments.apixml.hsbc.com'
+      LIVE_URL = 'https://www.secure-epayments.apixml.hsbc.com'      
+      
+      def initialize(options = {})
+        requires!(options, :login, :password, :client_id)
+        @options = options
+        super
+      end  
       
       def purchase(money, credit_card, options = {})
         options = {
@@ -231,13 +238,13 @@ module ActiveMerchant #:nodoc:
         xml.Transaction do
           xml.Type(:DataType => "String") { |x| x.text! transaction_type }
           case transaction_type
-          when 'PreAuth', 'Auth':
+          when 'PreAuth', 'Auth'
             xml.CurrentTotals do
               xml.Totals do
                 xml.Total(:DataType => "Money", :Currency => CURRENCY_MAPPINGS[options[:currency]].to_s) { |x| x.text! amount(options[:money]) }
               end
             end
-          when 'PostAuth', 'Void':
+          when 'PostAuth', 'Void'
             xml.Id(:DataType => "String") { |x| x.text! options[:authorization] }
             xml.CurrentTotals do
               xml.Totals do
@@ -299,9 +306,9 @@ module ActiveMerchant #:nodoc:
         !response[:transaction_id].nil? &&
         !response[:auth_code].nil? &&
         response[:transaction_status] == case action
-          when 'authorize', 'purchase', 'capture':
+          when 'authorize', 'purchase', 'capture'
             TRANSACTION_STATUS_MAPPINGS[:accepted]
-          when 'void':
+          when 'void'
             TRANSACTION_STATUS_MAPPINGS[:void]
           else
             nil
@@ -316,22 +323,22 @@ module ActiveMerchant #:nodoc:
         return {:code => 'U'} if response[:avs_display].blank?        
         {
           :code => case response[:avs_display]
-            when "YY":
+            when "YY"
               "Y"
-            when "YN":
+            when "YN"
               "A"
-            when "NY":
+            when "NY"
               "W"
-            when "NN":
+            when "NN"
               "C"
-            when "FF":
+            when "FF"
               "G"
             else
               "R"
           end
         }
       end
-
+      
     end
   end
 end
