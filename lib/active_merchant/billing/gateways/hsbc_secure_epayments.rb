@@ -1,3 +1,5 @@
+require "active_support/core_ext/class"
+
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
     class HsbcSecureEpaymentsGateway < Gateway
@@ -65,13 +67,13 @@ module ActiveMerchant #:nodoc:
       self.display_name = 'HSBC Secure ePayments'
       
       # Default currency is US$
-      self.default_currency = "USD"
+      self.default_currency = "GBP"
       
       # HSBC amounts are always in cents
       self.money_format = :cents
       
-      TEST_URL = 'https://www.secure-epayments.apixml.hsbc.com'
-      LIVE_URL = 'https://www.secure-epayments.apixml.hsbc.com'      
+      TEST_URL = 'https://www.uat.apixml.secureepayments.hsbc.com'
+      LIVE_URL = 'https://www.secure-epayments.apixml.hsbc.com'
       
       def initialize(options = {})
         requires!(options, :login, :password, :client_id)
@@ -125,16 +127,16 @@ module ActiveMerchant #:nodoc:
         xml = Builder::XmlMarkup.new :indent => 2
         xml.instruct! :xml, :version=>"1.0", :encoding=>"UTF-8"
         xml.EngineDocList do
-          xml.DocVersion(:DataType => "String") { |x| x.text! "1.0" }
+          xml.DocVersion("1.0", :DataType => "String")
           xml.EngineDoc do
-            xml.ContentType(:DataType => "String") { |x| x.text! "OrderFormDoc" }
+            xml.ContentType("OrderFormDoc", :DataType => "String")
             xml.User do
-              xml.Alias(:DataType => "String") { |x| x.text! self.options[:client_id] }
-              xml.Name(:DataType => "String") { |x| x.text! self.options[:login] }
-              xml.Password(:DataType => "String") { |x| x.text! self.options[:password] }
+              xml.ClientId(self.options[:client_id], :DataType => "S32")
+              xml.Name(self.options[:login], :DataType => "String")
+              xml.Password(self.options[:password], :DataType => "String")
             end
             xml.Instructions do
-              xml.Pipeline(:DataType => "String") { |x| x.text! "Payment" }
+              xml.Pipeline("Payment", :DataType => "String")
             end        
             yield(xml)
           end
@@ -143,16 +145,16 @@ module ActiveMerchant #:nodoc:
       
       def insert_authorize_data(xml, options = {})
         xml.OrderFormDoc do
-          xml.Mode(:DataType => "String") { |x| x.text! self.test? ? self.class.test_mode : "P" }
+          xml.Mode(self.test? ? self.class.test_mode : "P", :DataType => "String")
           xml.Consumer do
             xml.PaymentMech do
-              xml.Type(:DataType => "String") { |x| x.text! self.class.payment_mech_type}
+              xml.Type(self.class.payment_mech_type, :DataType => "String")
               xml.CreditCard do
                 credit_card = options[:credit_card]
-                xml.Number(:DataType => "String") { |x| x.text! credit_card.number }
-                xml.Expires(:DataType => "ExpirationDate") { |x| x.text! "#{format(credit_card.month, :two_digits)}/#{format(credit_card.year, :two_digits)}"}
-                xml.Cvv2Val(:DataType => "String") { |x| x.text! credit_card.verification_value } unless credit_card.verification_value.blank?
-                xml.Cvv2Indicator(:DataType => "String") { |x| x.text! "1" } unless credit_card.verification_value.blank?
+                xml.Number(credit_card.number, :DataType => "String")
+                xml.Expires("#{format(credit_card.month, :two_digits)}/#{format(credit_card.year, :two_digits)}", :DataType => "ExpirationDate")
+                xml.Cvv2Val(credit_card.verification_value, :DataType => "String") unless credit_card.verification_value.blank?
+                xml.Cvv2Indicator("1", :DataType => "String") unless credit_card.verification_value.blank?
               end
             end
             add_billing_address(xml, options)
@@ -164,16 +166,16 @@ module ActiveMerchant #:nodoc:
       
       def insert_purchase_data(xml, options = {})
         xml.OrderFormDoc do
-          xml.Mode(:DataType => "String") { |x| x.text! self.test? ? self.class.test_mode : "P" }
+          xml.Mode(self.test? ? self.class.test_mode : "P", :DataType => "String")
           xml.Consumer do
             xml.PaymentMech do
-              xml.Type(:DataType => "String") { |x| x.text! self.class.payment_mech_type}
+              xml.Type(self.class.payment_mech_type, :DataType => "String")
               xml.CreditCard do
                 credit_card = options[:credit_card]
-                xml.Number(:DataType => "String") { |x| x.text! credit_card.number }
-                xml.Expires(:DataType => "ExpirationDate") { |x| x.text! "#{format(credit_card.month, :two_digits)}/#{format(credit_card.year, :two_digits)}"}
-                xml.Cvv2Val(:DataType => "String") { |x| x.text! credit_card.verification_value } unless credit_card.verification_value.blank?
-                xml.Cvv2Indicator(:DataType => "String") { |x| x.text! "1" } unless credit_card.verification_value.blank?
+                xml.Number(credit_card.number, :DataType => "String")
+                xml.Expires("#{format(credit_card.month, :two_digits)}/#{format(credit_card.year, :two_digits)}", :DataType => "ExpirationDate", :Locale => "826")
+                xml.Cvv2Val(credit_card.verification_value, :DataType => "String") unless credit_card.verification_value.blank?
+                xml.Cvv2Indicator("1", :DataType => "String") unless credit_card.verification_value.blank?
               end
             end
             add_billing_address(xml, options)
@@ -185,14 +187,14 @@ module ActiveMerchant #:nodoc:
             
       def insert_capture_data(xml, options = {})
         xml.OrderFormDoc do
-          xml.Mode(:DataType => "String") { |x| x.text! self.test? ? self.class.test_mode : "P" }
+          xml.Mode(self.test? ? self.class.test_mode : "P", :DataType => "String")
           add_transaction_element(xml, "PostAuth", options)
         end
       end
             
       def insert_void_data(xml, options = {})
         xml.OrderFormDoc do
-          xml.Mode(:DataType => "String") { |x| x.text! self.test? ? self.class.test_mode : "P" }
+          xml.Mode(self.test? ? self.class.test_mode : "P", :DataType => "String")
           add_transaction_element(xml, "Void", options)
         end
       end
@@ -201,8 +203,8 @@ module ActiveMerchant #:nodoc:
         if options[:billing_address]
           xml.BillTo do
             xml.Location do
-              xml.Email(:DataType => "String") { |x| x.text! options[:email] } if options[:email]
-              xml.TelVoice(:DataType => "String") { |x| x.text! options[:billing_address][:phone] } if options[:billing_address][:phone]
+              xml.Email(options[:email], :DataType => "String") if options[:email]
+              xml.TelVoice(options[:billing_address][:phone], :DataType => "String") if options[:billing_address][:phone]
               add_address(xml, options[:billing_address])
             end
           end
@@ -213,8 +215,8 @@ module ActiveMerchant #:nodoc:
         if options[:shipping_address]
           xml.ShipTo do
             xml.Location do
-              xml.Email(:DataType => "String") { |x| x.text! options[:email] } if options[:email]
-              xml.TelVoice(:DataType => "String") { |x| x.text! options[:shipping_address][:phone] } if options[:shipping_address][:phone]
+              xml.Email(options[:email], :DataType => "String") if options[:email]
+              xml.TelVoice(options[:shipping_address][:phone], :DataType => "String") if options[:shipping_address][:phone]
               add_address(xml, options[:shipping_address])
             end
           end
@@ -223,32 +225,32 @@ module ActiveMerchant #:nodoc:
       
       def add_address(xml, address_opts = {})  
         xml.Address(:DataType => "String") do
-          xml.Name(:DataType => "String") { |x| x.text! address_opts[:name] } if address_opts[:name]
-          xml.Company(:DataType => "String") { |x| x.text! address_opts[:company] } if address_opts[:company]
-          xml.Street1(:DataType => "String") { |x| x.text! address_opts[:address1] } if address_opts[:address1]
-          xml.Street2(:DataType => "String") { |x| x.text! address_opts[:address2] } if address_opts[:address2]
-          xml.City(:DataType => "String") { |x| x.text! address_opts[:city] } if address_opts[:city]
-          xml.StateProv(:DataType => "String") { |x| x.text! address_opts[:state] } if address_opts[:state]
-          xml.Country(:DataType => "String") { |x| x.text! COUNTRY_CODE_MAPPINGS[address_opts[:country]].to_s } if address_opts[:country]
-          xml.PostalCode(:DataType => "String") { |x| x.text! address_opts[:zip] } if address_opts[:zip]
+          xml.Name(address_opts[:name], :DataType => "String") if address_opts[:name]
+          xml.Company(address_opts[:company], :DataType => "String") if address_opts[:company]
+          xml.Street1(address_opts[:address1], :DataType => "String") if address_opts[:address1]
+          xml.Street2(address_opts[:address2], :DataType => "String") if address_opts[:address2]
+          xml.City(address_opts[:city], :DataType => "String") if address_opts[:city]
+          xml.StateProv(address_opts[:state], :DataType => "String") if address_opts[:state]
+          xml.Country(COUNTRY_CODE_MAPPINGS[address_opts[:country]].to_s, :DataType => "String") if address_opts[:country]
+          xml.PostalCode(address_opts[:zip], :DataType => "String") if address_opts[:zip]
         end
       end
             
       def add_transaction_element(xml, transaction_type, options = {})
         xml.Transaction do
-          xml.Type(:DataType => "String") { |x| x.text! transaction_type }
+          xml.Type(transaction_type, :DataType => "String")
           case transaction_type
           when 'PreAuth', 'Auth'
             xml.CurrentTotals do
               xml.Totals do
-                xml.Total(:DataType => "Money", :Currency => CURRENCY_MAPPINGS[options[:currency]].to_s) { |x| x.text! amount(options[:money]) }
+                xml.Total(amount(options[:money]), :DataType => "Money", :Currency => CURRENCY_MAPPINGS[options[:currency]].to_s)
               end
             end
           when 'PostAuth', 'Void'
-            xml.Id(:DataType => "String") { |x| x.text! options[:authorization] }
+            xml.Id(options[:authorization], :DataType => "String")
             xml.CurrentTotals do
               xml.Totals do
-                xml.Total(:DataType => "Money", :Currency => CURRENCY_MAPPINGS[options[:currency]].to_s) { |x| x.text! amount(options[:money]) }
+                xml.Total(amount(options[:money]), :DataType => "Money", :Currency => CURRENCY_MAPPINGS[options[:currency]].to_s)
               end
             end
           end
@@ -256,7 +258,7 @@ module ActiveMerchant #:nodoc:
       end
       
       def commit(action, xml)
-        response = parse(action, ssl_post(LIVE_URL, xml, "Content-Type" => "application/xml"))
+        response = parse(action, ssl_post(self.test? ? TEST_URL : LIVE_URL, xml, "Content-Type" => "application/xml"))
         Response.new(success_from(action, response), message_from(response), response, options_from(response))
       end
 

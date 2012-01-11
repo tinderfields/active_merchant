@@ -8,7 +8,7 @@ class RemoteHsbcSecureEpaymentTest < Test::Unit::TestCase
     @gateway = HsbcSecureEpaymentsGateway.new(fixtures(:hsbc_secure_epayment))
     
     @amount = 100
-    @credit_card = credit_card('4000100011112224')
+    @credit_card = credit_card('4111111111111111')
     @declined_card = credit_card('4000300011112220')
     
     @options = { 

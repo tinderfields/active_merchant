@@ -176,7 +176,7 @@ module ActiveMerchant
         :city     => 'Ottawa',
         :state    => 'ON',
         :zip      => 'K1C2N6',
-        :country  => 'CA',
+        :country  => 'GB',
         :phone    => '(555)555-5555',
         :fax      => '(555)555-6666'
       }.update(options)
