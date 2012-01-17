@@ -54,17 +54,17 @@ class RemoteHsbcSecureEpaymentTest < Test::Unit::TestCase
   def test_failed_capture
     assert response = @gateway.capture(@amount, '')
     assert_failure response
-    assert_equal 'REPLACE WITH GATEWAY FAILURE MESSAGE', response.message
+    assert_equal 'System error.', response.message
   end
   
   def test_invalid_login
     gateway = HsbcSecureEpaymentsGateway.new(
-                :login => 'login',
-                :password => 'password',
-                :client_id => 'client_id'
-              )
+      :login => 'login',
+      :password => 'password',
+      :client_id => '098'
+    )
     assert response = gateway.purchase(@amount, @credit_card, @options)
     assert_failure response
-    assert_equal 'System error', response.message
+    assert_equal 'Insufficient permissions to perform requested operation.', response.message
   end
 end
